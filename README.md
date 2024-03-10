@@ -26,7 +26,7 @@ La configuración del nginx se encuentra en el archivo [nginx.conf](nginx.conf).
 
 ```bash
 docker run --rm --name  nginx -p 80:80 -p 443:443 \
-    -e  DOMAIN=tripe.com \
+    -e  DOMAIN=dominio.com \
     nginx-docker
 ```
 
@@ -46,9 +46,9 @@ Puede consultar logs de Nginx ejecute en cualquier nodo del cluster swarm la sig
 docker logs -f  --tail 100 nginx
 ```
 
-## Template's
+## Utils
 
-Dentro de la carpeta `tpl` hay varios archivos que le ayudaran a configurar diferentes características en el nginx, ejemplo:
+Dentro de la carpeta `resources/utils` hay varios archivos que le ayudaran a configurar diferentes características en el nginx, ejemplo:
 
-* **[gzip](swarm-server/config.d/tpl/gzip)** Posee las instrucciones necesarias para habilitar la compresión gzip en el dominio indicado.
-* **[host](swarm-server/config.d/tpl/host)** Permite habilitar la replicación de ciertas cabeceras como el host.
+* **[gzip](resources/utils/gzip)** Posee las instrucciones necesarias para habilitar la compresión gzip en el dominio indicado.
+* **[host](resources/utils/host)** Permite habilitar la replicación de ciertas cabeceras como el host.
