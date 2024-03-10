@@ -1,11 +1,9 @@
 # Utiliza la imagen base de Nginx
 FROM nginx
 
-COPY default.conf /etc/nginx/conf.d/default.conf
+COPY config.d /etc/nginx/conf.d
 
-COPY nginx.conf /etc/nginx/nginx.conf
-
-COPY config.d/tpl /etc/nginx/conf.d/tpl
+COPY tpl /etc/nginx/tpl
 
 EXPOSE 80 443
 
