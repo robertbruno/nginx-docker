@@ -1,0 +1,12 @@
+server {
+    listen 80;
+    server_name ${FQDN_WEBAPP};
+    
+    set $upstream_webapp "${UPSTREAM_WEBAPP}";
+
+    location / {
+        proxy_pass $upstream_webapp;
+        include /etc/nginx/conf.d/tpl/host;
+        include /etc/nginx/conf.d/tpl/gzip;
+    }
+}
