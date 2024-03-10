@@ -86,8 +86,8 @@ docker run --rm -it \
     --webroot \
     --webroot-path=/usr/share/nginx/html/ \
     --expand \
-    -d demo.sigisqa.com \
-    -d api-demo.sigisqa.com
+    -d demo.dominio.com \
+    -d api-demo.dominio.com
 ```
 
 > Cambie los valores de email y dominio según sea el caso, para mayor información visitar:
@@ -116,9 +116,6 @@ server {
 ## Renewing certificates
 
 Encrypt CA emite certificados de corta duración (90 días). Asegúrese de renovar los certificados al menos una vez en 3 meses.
-Para etso existe un proyecto Jenkins que ejecuta una tarea automatizada:
-
-* [nginx-web-renew](https://jenkins.sigis.com.ve/job/qa-platform/job/nginx-web-renew/)
 
 Si lo desea ejecutar usted mismo en la línea de comando puede hacerlo de la siguiente forma:
 
@@ -130,13 +127,6 @@ docker run --rm  \
 ```
 
 > Este comando intenta renovar cualquier certificado obtenido previamente que caduque en menos de 30 días.
-> Para mayor información visitar:
->
-> * [certbot renewing](https://certbot.eff.org/docs/using.html#renewing-certificates)
->
-> Puede apoyarse del proyecto jenkins destinado para tal fin:
->
-> * [nginx-web-cerbot-renew](https://jenkins.sigis.com.ve/job/qa-platform/job/nginx/job/nginx-web-cerbot-renew/)
 
 ## Revoking certificates
 
@@ -155,6 +145,3 @@ docker run --rm  \
 >
 > * [certbot revoking](https://certbot.eff.org/docs/using.html#revoking-certificates)
 >
-> Puede apoyarse del proyecto jenkins destinado para tal fin:
->
-> * [nginx-web-revoke](https://jenkins.sigis.com.ve/job/qa-platform/job/nginx/job/nginx-web-revoke/)
