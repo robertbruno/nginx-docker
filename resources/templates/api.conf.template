@@ -4,11 +4,10 @@ limit_req_zone $binary_remote_addr zone=login:10m rate=1r/s;
 server {
     listen 80;
     server_name ${FQDN_API};
-
-    set $upstream_webapp "${UPSTREAM_API}";
+    set $upstream_api "${UPSTREAM_API}";
 
     location / {
-        proxy_pass $upstream_webapp;
+        proxy_pass $upstream_api;
         include /etc/nginx/utils/host;
     }
 
@@ -16,11 +15,13 @@ server {
         # apply rate limiting
         # see https://postgrest.org/en/v12/explanations/nginx.html
         limit_req zone=login burst=5;
+        proxy_pass $upstream_api;
     }
 
     location /rpc/login/ {
         # apply rate limiting
         # see https://postgrest.org/en/v12/explanations/nginx.html
         limit_req zone=login burst=5;
+        proxy_pass $upstream_api;
     }
 }

@@ -2,9 +2,9 @@
 server {
     listen 80;
     server_name ${FQDN_EMITTER};
+    set $upstream_emitter "${UPSTREAM_EMITTER}";
 
     location / {
-        set $upstream_emitter "${UPSTREAM_EMITTER}";
         proxy_pass $upstream_emitter;
         include /etc/nginx/utils/host;
 
