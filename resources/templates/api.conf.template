@@ -5,6 +5,7 @@ server {
     listen 80;
     server_name ${FQDN_API};
     set $upstream_api "${UPSTREAM_API}";
+    set $upstream_rabbitmq "${UPSTREAM_RABBITMQ}";
 
     location / {
         proxy_pass $upstream_api;
@@ -24,4 +25,11 @@ server {
         limit_req zone=login burst=5;
         proxy_pass $upstream_api;
     }
+
+    location /rabbitmq/ {
+		rewrite ^/rabbitmq/(.*) /$1 break;
+		proxy_pass $upstream_rabbitmq;
+		include /etc/nginx/utils/host;
+	}
+
 }
