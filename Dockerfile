@@ -13,6 +13,7 @@ RUN echo "deb [signed-by=/usr/share/keyrings/azlux-archive-keyring.gpg] http://p
       && apt update && apt install -y webhookd
   
 COPY scripts /scripts
+RUN chmod +x /scripts/*.sh
 
 # nginx config files
 COPY nginx.conf /etc/nginx/nginx.conf
