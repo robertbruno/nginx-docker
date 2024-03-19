@@ -1,8 +1,8 @@
 #!/bin/bash
 
-DEFAULT_MAIL=${DEFAULT_MAIL:-""}
-EXPAND=${EXPAND:-}
-DOMAIN=${DOMAIN:-}
+DEFAULT_MAIL=${default_mail:-""}
+EXPAND=${expnad:-}
+DOMAIN=${domain:-}
 
 usage="
 $(basename "$0") [-d domain] [-e expand]
@@ -41,31 +41,38 @@ done
 shift $((OPTIND -1))
 
 if [ -z "${DOMAIN}" ]; then
-    echo "${usage}"
+    echo "the parameter domain is missing. ${usage}"
+    exit 1
+fi
+
+if [ -z "${DEFAULT_MAIL}" ]; then
+    echo "the parameter default_mail is missing. ${usage}"
     exit 1
 fi
 
 
 if [[ -z "$EXPAND" ]]; then
     echo "Sigle domain ${DOMAIN}"
-    certbot/certbot \
-    certonly \
-    --agree-tos \
-    --webroot \
-    --webroot-path=/usr/share/nginx/html/ \
-    --email ${DEFAULT_MAIL} \
-    --keep \
-    -d ${DOMAIN}
+    certbot \
+      certonly \
+      --non-interactive \
+      --agree-tos \
+      --webroot \
+      --webroot-path=/usr/share/nginx/html/ \
+      --email ${DEFAULT_MAIL} \
+      --keep \
+      -d ${DOMAIN}
 else
     echo "Expand domain ${DOMAIN}"
-    certbot/certbot \
-    certonly \
-    --agree-tos \
-    --webroot \
-    --webroot-path=/usr/share/nginx/html/ \
-    --email ${DEFAULT_MAIL} \
-    --expand \
-    --keep \
-    -d ${DOMAIN} \
-    -d ${EXPAND}
+    certbot \
+      certonly \
+      --non-interactive \
+      --agree-tos \
+      --webroot \
+      --webroot-path=/usr/share/nginx/html/ \
+      --email ${DEFAULT_MAIL} \
+      --expand \
+      --keep \
+      -d ${DOMAIN} \
+      -d ${EXPAND}
 fi
