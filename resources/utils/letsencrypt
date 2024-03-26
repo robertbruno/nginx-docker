@@ -1,6 +1,7 @@
 
 # Rule for legitimate ACME Challenge requests (like /.well-known/acme-challenge/xxxxxxxxx)
-location ^~ /.well-known/acme-challenge/ {
+# location ^~ /.well-known/acme-challenge/ {
+location /.well-known/acme-challenge/ {    
     # No HTTP authentication
     allow all;
 

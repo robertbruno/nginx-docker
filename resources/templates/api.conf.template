@@ -3,7 +3,9 @@ server {
     listen 80;
 
     server_name ${FQDN_API};
+    
     set $upstream_api "${UPSTREAM_API}";
+    
     set $upstream_rabbitmq "${UPSTREAM_RABBITMQ}";
 
     location / {

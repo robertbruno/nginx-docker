@@ -6,6 +6,7 @@ map $http_upgrade $connection_upgrade {
 server {
     listen 80;
     server_name ${FQDN_WEBAPP};
+
     set $upstream_webapp "${UPSTREAM_WEBAPP}";
 
     location / {
