@@ -1,8 +1,7 @@
 
-limit_req_zone $binary_remote_addr zone=login:10m rate=1r/s;
-
 server {
     listen 80;
+
     server_name ${FQDN_API};
     set $upstream_api "${UPSTREAM_API}";
     set $upstream_rabbitmq "${UPSTREAM_RABBITMQ}";
@@ -12,24 +11,11 @@ server {
         include /etc/nginx/utils/host;
     }
 
-    location /rpc/request_access/ {
-        # apply rate limiting
-        # see https://postgrest.org/en/v12/explanations/nginx.html
-        limit_req zone=login burst=5;
-        proxy_pass $upstream_api;
-    }
-
-    location /rpc/login/ {
-        # apply rate limiting
-        # see https://postgrest.org/en/v12/explanations/nginx.html
-        limit_req zone=login burst=5;
-        proxy_pass $upstream_api;
-    }
-
     location /rabbitmq/ {
 		rewrite ^/rabbitmq/(.*) /$1 break;
 		proxy_pass $upstream_rabbitmq;
 		include /etc/nginx/utils/host;
 	}
 
+    include /etc/nginx/utils/letsencrypt;
 }

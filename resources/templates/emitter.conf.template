@@ -20,4 +20,6 @@ server {
         proxy_read_timeout  36000s;
         proxy_redirect off;
     }
+
+    include /etc/nginx/utils/letsencrypt;
 }

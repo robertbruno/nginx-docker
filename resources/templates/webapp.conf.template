@@ -13,4 +13,6 @@ server {
         include /etc/nginx/utils/host;
         include /etc/nginx/utils/gzip;
     }
+
+    include /etc/nginx/utils/letsencrypt;
 }

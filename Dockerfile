@@ -28,5 +28,7 @@ RUN apt-get clean \
 
 EXPOSE 80 8080 443
 
+ENV NGINX_RESOLVER=127.0.0.1
+
 # Comando para iniciar Nginx cuando se ejecute el contenedor
 CMD ["nginx", "-g", "daemon off;"]
