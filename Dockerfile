@@ -37,7 +37,7 @@ EXPOSE 80 8080 443
 
 ENV NGINX_RESOLVER=127.0.0.1 \
   WHD_PASSWD_FILE=/etc/webhookd/users.htpasswd \
-  WHD_USER= \
+  WHD_USER=webhookd \
   WHD_PASSWD=
 
 # Comando para iniciar Nginx cuando se ejecute el contenedor

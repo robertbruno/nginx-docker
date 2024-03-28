@@ -1,7 +1,7 @@
 #!/bin/bash
 
 export basepath=/etc/nginx/conf.d/
-export pattern=${pattern:-"*.conf"}
+export pattern=${pattern:-"*"}
 export sufix=${sufix:-".disabled"}
 
 usage="
@@ -41,7 +41,7 @@ done
 shift $((OPTIND -1))
 
 
-files=$(find "$basepath" -type f -name "$pattern$sufix")
+files=$(find "$basepath" -type f -name "$pattern.conf$sufix")
 
 for file in $files; do
   new_name=${file%$sufix}
