@@ -5,7 +5,8 @@ FROM nginx
 RUN apt-get update\
       && apt-get install -y \
       certbot python3-certbot-nginx \
-      cron
+      cron \
+      apache2-utils
 
 RUN apt install -y wget
 RUN echo "deb [signed-by=/usr/share/keyrings/azlux-archive-keyring.gpg] http://packages.azlux.fr/debian/ stable main" | \
@@ -34,7 +35,10 @@ RUN apt-get clean \
 
 EXPOSE 80 8080 443
 
-ENV NGINX_RESOLVER=127.0.0.1
+ENV NGINX_RESOLVER=127.0.0.1 \
+  WHD_PASSWD_FILE=/etc/webhookd/users.htpasswd \
+  WHD_USER=webhookd \
+  WHD_PASSWD=webhookd
 
 # Comando para iniciar Nginx cuando se ejecute el contenedor
 CMD ["nginx", "-g", "daemon off;"]
