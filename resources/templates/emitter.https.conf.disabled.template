@@ -1,3 +1,5 @@
+
+
 map $http_upgrade $connection_upgrade {
     default upgrade;
     ''      close;
@@ -5,6 +7,17 @@ map $http_upgrade $connection_upgrade {
 
 server {
     listen 80;
+    server_name ${FQDN_EMITTER};
+
+    location ~* "^([\/:?=&#]{1}[\da-z\.-]+)*[\/\?]?$" {
+          return 302 https://$host$request_uri;
+    }
+
+    include /etc/nginx/utils/letsencrypt;
+}
+
+server {
+    listen 443 ssl;
     server_name ${FQDN_EMITTER};
 
     set $upstream_emitter "${UPSTREAM_EMITTER}";
@@ -26,5 +39,5 @@ server {
         proxy_redirect off;
     }
 
-    include /etc/nginx/utils/letsencrypt;
+    include /etc/nginx/utils/ssl;
 }

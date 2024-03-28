@@ -1,0 +1,27 @@
+
+server {
+    listen 80;
+    server_name ${FQDN_WEBAPP};
+
+    location ~* "^([\/:?=&#]{1}[\da-z\.-]+)*[\/\?]?$" {
+          return 302 https://$host$request_uri;
+    }
+
+    include /etc/nginx/utils/letsencrypt;
+}
+
+server {
+    listen 443 ssl;
+ 
+    server_name ${FQDN_WEBAPP};
+
+    set $upstream_webapp "${UPSTREAM_WEBAPP}";
+
+    location / {
+        proxy_pass $upstream_webapp;
+        include /etc/nginx/utils/host;
+        include /etc/nginx/utils/gzip;
+    }
+
+    include /etc/nginx/utils/ssl;
+}
