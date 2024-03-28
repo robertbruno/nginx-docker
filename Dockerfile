@@ -4,7 +4,8 @@ FROM nginx
 # https://certbot.eff.org/
 RUN apt-get update\
       && apt-get install -y \
-      certbot python3-certbot-nginx
+      certbot python3-certbot-nginx \
+      cron
 
 RUN apt install -y wget
 RUN echo "deb [signed-by=/usr/share/keyrings/azlux-archive-keyring.gpg] http://packages.azlux.fr/debian/ stable main" | \
@@ -19,12 +20,17 @@ RUN chmod +x /scripts/*.sh
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY resources/utils /etc/nginx/utils
 COPY resources/templates /etc/nginx/templates
-COPY /80-webhookd.sh /docker-entrypoint.d/80-webhookd.sh
+COPY resources/80-webhookd.sh /docker-entrypoint.d/80-webhookd.sh
 RUN chmod +x /docker-entrypoint.d/80-webhookd.sh
+COPY resources/90-cron.sh /docker-entrypoint.d/90-cron.sh
+RUN chmod +x /docker-entrypoint.d/90-cron.sh
+
+COPY resources/crontab /etc/crontab
 
 # clean
 RUN apt-get clean \
-      && rm -rf /var/lib/apt/lists/*
+      && rm -rf /var/lib/apt/lists/* \
+      && rm -rf /etc/cron.d/certbot
 
 EXPOSE 80 8080 443
 
