@@ -1,22 +1,20 @@
 #!/bin/bash
 
 export basepath=/etc/nginx/conf.d/
-export pattern=${pattern:-"*"}
-export sufix=${sufix:-".disabled"}
+export pattern=${pattern:-"*.*"}
 
 usage="
-$(basename "$0") [-b /base/path/to] [-p pattern] [-s sufix]
+$(basename "$0") [-b /base/path/to] [-p pattern]
 
-Disable nginx config (add .disable sufix)
+Find nginx config
 
 where:
     -h  show this help text
     -b  base path to files              env basepath
     -p  pattern to find                 env pattern
-    -s  save config as this new sufix   env sufix
 "
 
-while getopts ":h:b:p:s:" opt; do
+while getopts ":h:b:p:" opt; do
   case ${opt} in
 
     h)      
@@ -29,9 +27,6 @@ while getopts ":h:b:p:s:" opt; do
     p)
       pattern=$OPTARG
       ;;
-    s )
-      sufix=$OPTARG
-      ;;      
     \? )
       ;;
     : )
@@ -40,4 +35,4 @@ while getopts ":h:b:p:s:" opt; do
 done
 shift $((OPTIND -1))
 
-find "$basepath" -type f -name "$pattern.conf" -exec bash -c "mv -v {} {}$sufix" \;
+find "$basepath" -type f -name "$pattern"

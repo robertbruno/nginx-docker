@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export basepath=${basepath:-/etc/nginx/conf.d/}
+export basepath=/etc/nginx/conf.d/
 export pattern=${pattern:-"*.conf"}
 export sufix=${sufix:-".disabled"}
 
