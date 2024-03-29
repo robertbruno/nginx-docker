@@ -24,10 +24,10 @@ where:
 while getopts ":h:d:e:m:" opt; do
   case ${opt} in
 
-    h)      
+    h)
       printf $usage
       exit 1
-      ;;  
+      ;;
     d )
       DOMAIN=$OPTARG
       ;;
@@ -87,15 +87,10 @@ fi
 
 if [ -n ${AWS_ACCESS_KEY_ID} ]; then
   if [ $? -eq 0 ]; then
-    
+
     echo "Importing certificate to aws acm..."
 
-    CERT_ARN=`aws acm import-certificate \
-      --region $AWS_REGION \
-      --certificate fileb:///etc/letsencrypt/live/$DOMAIN/cert.pem \
-      --certificate-chain fileb:///etc/letsencrypt/live/$DOMAIN/fullchain.pem \
-      --private-key fileb:///etc/letsencrypt/live/$DOMAIN/privkey.pem | \
-      jq -r .CertificateArn`
+    CERT_ARN=`aws acm import-certificate --region $AWS_REGION --certificate fileb:///etc/letsencrypt/live/$DOMAIN/cert.pem --certificate-chain fileb:///etc/letsencrypt/live/$DOMAIN/fullchain.pem --private-key fileb:///etc/letsencrypt/live/$DOMAIN/privkey.pem | jq -r .CertificateArn`
 
     aws acm describe-certificate \
       --region $AWS_REGION \
