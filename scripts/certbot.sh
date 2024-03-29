@@ -1,8 +1,13 @@
 #!/bin/bash
 
-DEFAULT_MAIL=${default_mail:-""}
-EXPAND=${expnad:-}
-DOMAIN=${domain:-}
+export DEFAULT_MAIL=${default_mail:-""}
+export EXPAND=${expnad:-}
+export DOMAIN=${domain:-}
+export AWS_REGION=${AWS_REGION:-"us-east-1"}
+export AWS_ACCESS_KEY_ID=${YOUR_ACCESS_KEY_ID:-""}
+export AWS_SECRET_ACCESS_KEY=${YOUR_SECRET_ACCESS_KEY:-""}
+export ALB_ARN=${ALB_ARN:-"arn:aws:elasticloadbalancing:REGION:ACCOUNT_ID:loadbalancer/app/ALB_NAME/4a1df3859a2576ca"}
+export ALB_LISTENER_PORT="443"
 
 usage="
 $(basename "$0") [-d domain] [-e expand]
@@ -75,4 +80,36 @@ else
       --keep \
       -d ${DOMAIN} \
       -d ${EXPAND}
+fi
+
+
+if [[ -n "$AWS_ACCESS_KEY_ID" ]] then
+
+  echo "Importing certificate to aws acm..."
+
+  if [ $? -eq 0 ]; then
+    CERT_ARN=`aws acm import-certificate \
+      --region $AWS_REGION \
+      --certificate fileb:///etc/letsencrypt/live/$DOMAIN/cert.pem \
+      --certificate-chain fileb:///etc/letsencrypt/live/$DOMAIN/fullchain.pem \
+      --private-key fileb:///etc/letsencrypt/live/$DOMAIN/privkey.pem | \
+      jq -r .CertificateArn`
+
+    aws acm describe-certificate \
+      --region $AWS_REGION \
+      --certificate-arn \
+      $(aws acm list-certificates --region $AWS_REGION --query 'CertificateSummaryList[].CertificateArn' --output text)
+
+
+    aws elbv2 add-listener-certificates \
+      --region $AWS_REGION \
+      --load-balancer-arn $ALB_ARN \
+      --listener-arn $LISTENER_PORT \
+      --certificates CertificateArn=$CERT_ARN
+
+    aws elbv2 describe-listeners \
+      --region $AWS_REGION \
+      --load-balancer-arn $ALB_ARN \
+      --listener-arns $LISTENER_PORT
+  fi
 fi

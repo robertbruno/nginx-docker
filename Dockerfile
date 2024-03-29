@@ -7,7 +7,9 @@ RUN apt-get update\
       certbot python3-certbot-nginx \
       cron \
       apache2-utils \
-      wget
+      wget \
+      awscli \
+      jq
 
 RUN echo "deb [signed-by=/usr/share/keyrings/azlux-archive-keyring.gpg] http://packages.azlux.fr/debian/ stable main" | \
       tee /etc/apt/sources.list.d/azlux.list \
