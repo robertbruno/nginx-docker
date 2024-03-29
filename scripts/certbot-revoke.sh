@@ -1,6 +1,6 @@
 #!/bin/sh
 
-REASON=${reason:-}
+REASON=${reason:-"superseded"}
 DOMAIN=${domain:-}
 
 certbot revoke -n \
