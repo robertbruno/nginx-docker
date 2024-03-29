@@ -85,7 +85,7 @@ else
 fi
 
 
-if [[ -n "$AWS_ACCESS_KEY_ID" ]] then
+if [[ -n ${AWS_ACCESS_KEY_ID} ]]; then
   if [ $? -eq 0 ]; then
     
     echo "Importing certificate to aws acm..."
