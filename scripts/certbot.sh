@@ -60,6 +60,7 @@ if [[ -z "$EXPAND" ]]; then
     echo "Sigle domain ${DOMAIN}"
     certbot \
       certonly \
+      --verbose \
       --non-interactive \
       --agree-tos \
       --webroot \
@@ -71,6 +72,7 @@ else
     echo "Expand domain ${DOMAIN}"
     certbot \
       certonly \
+      --verbose \
       --non-interactive \
       --agree-tos \
       --webroot \
@@ -84,10 +86,10 @@ fi
 
 
 if [[ -n "$AWS_ACCESS_KEY_ID" ]] then
-
-  echo "Importing certificate to aws acm..."
-
   if [ $? -eq 0 ]; then
+    
+    echo "Importing certificate to aws acm..."
+
     CERT_ARN=`aws acm import-certificate \
       --region $AWS_REGION \
       --certificate fileb:///etc/letsencrypt/live/$DOMAIN/cert.pem \
