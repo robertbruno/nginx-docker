@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 # Si la variable DEBUG existe, se mostraran las órdenes y sus argumentos mientras se ejecutan.
 [ -n "${DEBUG:-}" ] && set -x
 
@@ -11,6 +13,7 @@ export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-""}
 export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-""}
 export ALB_ARN=${ALB_ARN:-"arn:aws:elasticloadbalancing:REGION:ACCOUNT_ID:loadbalancer/app/ALB_NAME/4a1df3859a2576ca"}
 export ALB_LISTENER_PORT="443"
+export TARGET_GROUP_ARN=${TARGET_GROUP_ARN:-}
 
 usage="
 $(basename "$0") [-d domain] [-e expand]
@@ -98,27 +101,25 @@ if [ -d "$EXIST" ]; then
   echo "Cheking [/etc/letsencrypt/live/$DOMAIN/]"
 
   if [ -n ${AWS_ACCESS_KEY_ID} ]; then
-    if [ $? -eq 0 ]; then
+    echo "Importing certificate to aws acm..."
 
-      echo "Importing certificate to aws acm..."
+    CERT_ARN=`aws acm import-certificate --region $AWS_REGION --certificate fileb:///etc/letsencrypt/live/$DOMAIN/cert.pem --certificate-chain fileb:///etc/letsencrypt/live/$DOMAIN/fullchain.pem --private-key fileb:///etc/letsencrypt/live/$DOMAIN/privkey.pem | jq -r .CertificateArn`
 
-      CERT_ARN=`aws acm import-certificate --region $AWS_REGION --certificate fileb:///etc/letsencrypt/live/$DOMAIN/cert.pem --certificate-chain fileb:///etc/letsencrypt/live/$DOMAIN/fullchain.pem --private-key fileb:///etc/letsencrypt/live/$DOMAIN/privkey.pem | jq -r .CertificateArn`
+    if [ -n "$CERT_ARN" ]; then
 
-      if [ -n "$CERT_ARN" ]; then
+      echo "CERT_ARN: $CERT_ARN"
 
-        echo "CERT_ARN: $CERT_ARN"
-
-        aws elbv2 add-listener-certificates \
-          --region $AWS_REGION \
-          --load-balancer-arn $ALB_ARN \
-          --listener-arn $LISTENER_PORT \
-          --certificates CertificateArn=$CERT_ARN
-
-        aws elbv2 describe-listeners \
-          --region $AWS_REGION \
-          --load-balancer-arn $ALB_ARN \
-          --listener-arns $LISTENER_PORT
+      # If a listener does not exist for port 443, create it
+      LISTENER_ARN=$(aws elbv2 describe-listeners --load-balancer-arn "$ALB_ARN" --query 'Listeners[?Port==443].ListenerArn' --output text)
+      if [[ -z "$LISTENER_ARN" ]]; then
+        echo "Creating listener for port 443..."
+        LISTENER_ARN=$(aws elbv2 create-listener --load-balancer-arn "$ALB_ARN" --protocol "HTTPS" --port 443 --default-actions Type=forward,TargetGroupArn=$TARGET_GROUP_ARN --output text)
       fi
+
+      echo "Asociando certificado al listener..."
+      aws elbv2 add-listener-certificates \
+        --listener-arn "$LISTENER_ARN" \
+        --certificates "$CERT_ARN"
     fi
   fi
 else
