@@ -104,7 +104,7 @@ if [ -d "$EXIST" ]; then
 
       CERT_ARN=`aws acm import-certificate --region $AWS_REGION --certificate fileb:///etc/letsencrypt/live/$DOMAIN/cert.pem --certificate-chain fileb:///etc/letsencrypt/live/$DOMAIN/fullchain.pem --private-key fileb:///etc/letsencrypt/live/$DOMAIN/privkey.pem | jq -r .CertificateArn`
 
-      if [ -n "$CERT_ARN"]; then
+      if [ -n "$CERT_ARN" ]; then
 
         echo "CERT_ARN: $CERT_ARN"
 
