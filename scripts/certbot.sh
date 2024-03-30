@@ -2,7 +2,7 @@
 
 set -e
 
-# Si la variable DEBUG existe, se mostraran las órdenes y sus argumentos mientras se ejecutan.
+# If the DEBUG variable exists, the commands and their arguments will be displayed while they are executed.
 [ -n "${DEBUG:-}" ] && set -x
 
 export DEFAULT_MAIL=${default_mail:-""}
@@ -11,7 +11,7 @@ export DOMAIN=${domain:-}
 export AWS_REGION=${AWS_REGION:-"us-east-1"}
 export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-""}
 export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-""}
-export ALB_ARN=${ALB_ARN:-"arn:aws:elasticloadbalancing:REGION:ACCOUNT_ID:loadbalancer/app/ALB_NAME/4a1df3859a2576ca"}
+export ALB_ARN=${ALB_ARN:-}
 export ALB_LISTENER_PORT="443"
 export TARGET_GROUP_ARN=${TARGET_GROUP_ARN:-}
 
@@ -116,7 +116,7 @@ if [ -d "$EXIST" ]; then
         LISTENER_ARN=$(aws elbv2 create-listener --load-balancer-arn "$ALB_ARN" --protocol "HTTPS" --port 443 --default-actions Type=forward,TargetGroupArn=$TARGET_GROUP_ARN --output text)
       fi
 
-      echo "Asociando certificado al listener..."
+      echo "Associating certificate to listener..."
       aws elbv2 add-listener-certificates \
         --listener-arn "$LISTENER_ARN" \
         --certificates "$CERT_ARN"
