@@ -84,29 +84,36 @@ else
       -d ${EXPAND}
 fi
 
+EXIST="/etc/letsencrypt/live/$DOMAIN/"
+if [ -d "$EXIST" ]; then
+  
+  echo "Cheking [/etc/letsencrypt/live/$DOMAIN/]"
 
-if [ -n ${AWS_ACCESS_KEY_ID} ]; then
-  if [ $? -eq 0 ]; then
+  if [ -n ${AWS_ACCESS_KEY_ID} ]; then
+    if [ $? -eq 0 ]; then
 
-    echo "Importing certificate to aws acm..."
+      echo "Importing certificate to aws acm..."
 
-    CERT_ARN=`aws acm import-certificate --region $AWS_REGION --certificate fileb:///etc/letsencrypt/live/$DOMAIN/cert.pem --certificate-chain fileb:///etc/letsencrypt/live/$DOMAIN/fullchain.pem --private-key fileb:///etc/letsencrypt/live/$DOMAIN/privkey.pem | jq -r .CertificateArn`
+      CERT_ARN=`aws acm import-certificate --region $AWS_REGION --certificate fileb:///etc/letsencrypt/live/$DOMAIN/cert.pem --certificate-chain fileb:///etc/letsencrypt/live/$DOMAIN/fullchain.pem --private-key fileb:///etc/letsencrypt/live/$DOMAIN/privkey.pem | jq -r .CertificateArn`
 
-    aws acm describe-certificate \
-      --region $AWS_REGION \
-      --certificate-arn \
-      $(aws acm list-certificates --region $AWS_REGION --query 'CertificateSummaryList[].CertificateArn' --output text)
+      aws acm describe-certificate \
+        --region $AWS_REGION \
+        --certificate-arn \
+        $(aws acm list-certificates --region $AWS_REGION --query 'CertificateSummaryList[].CertificateArn' --output text)
 
 
-    aws elbv2 add-listener-certificates \
-      --region $AWS_REGION \
-      --load-balancer-arn $ALB_ARN \
-      --listener-arn $LISTENER_PORT \
-      --certificates CertificateArn=$CERT_ARN
+      aws elbv2 add-listener-certificates \
+        --region $AWS_REGION \
+        --load-balancer-arn $ALB_ARN \
+        --listener-arn $LISTENER_PORT \
+        --certificates CertificateArn=$CERT_ARN
 
-    aws elbv2 describe-listeners \
-      --region $AWS_REGION \
-      --load-balancer-arn $ALB_ARN \
-      --listener-arns $LISTENER_PORT
+      aws elbv2 describe-listeners \
+        --region $AWS_REGION \
+        --load-balancer-arn $ALB_ARN \
+        --listener-arns $LISTENER_PORT
+    fi
   fi
+else
+  echo "File [/etc/letsencrypt/live/$DOMAIN/] not found"
 fi
