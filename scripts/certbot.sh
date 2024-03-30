@@ -1,5 +1,10 @@
 #!/bin/bash
 
+set -e
+
+# Si la variable DEBUG existe, se mostraran las órdenes y sus argumentos mientras se ejecutan.
+[ -n "${DEBUG:-}" ] && set -x
+
 export DEFAULT_MAIL=${default_mail:-""}
 export EXPAND=${expnad:-}
 export DOMAIN=${domain:-}
@@ -95,6 +100,8 @@ if [ -d "$EXIST" ]; then
       echo "Importing certificate to aws acm..."
 
       CERT_ARN=`aws acm import-certificate --region $AWS_REGION --certificate fileb:///etc/letsencrypt/live/$DOMAIN/cert.pem --certificate-chain fileb:///etc/letsencrypt/live/$DOMAIN/fullchain.pem --private-key fileb:///etc/letsencrypt/live/$DOMAIN/privkey.pem | jq -r .CertificateArn`
+
+      echo "CERT_ARN: $CERT_ARN"
 
       aws acm describe-certificate \
         --region $AWS_REGION \
