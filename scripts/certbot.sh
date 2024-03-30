@@ -9,8 +9,8 @@ export DEFAULT_MAIL=${default_mail:-""}
 export EXPAND=${expnad:-}
 export DOMAIN=${domain:-}
 export AWS_REGION=${AWS_REGION:-"us-east-1"}
-export AWS_ACCESS_KEY_ID=${YOUR_ACCESS_KEY_ID:-""}
-export AWS_SECRET_ACCESS_KEY=${YOUR_SECRET_ACCESS_KEY:-""}
+export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-""}
+export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-""}
 export ALB_ARN=${ALB_ARN:-"arn:aws:elasticloadbalancing:REGION:ACCOUNT_ID:loadbalancer/app/ALB_NAME/4a1df3859a2576ca"}
 export ALB_LISTENER_PORT="443"
 
