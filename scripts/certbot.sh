@@ -97,7 +97,7 @@ fi
 
 EXIST="/etc/letsencrypt/live/$DOMAIN/"
 if [ -d "$EXIST" ]; then
-  
+
   echo "Cheking [/etc/letsencrypt/live/$DOMAIN/]"
 
   if [ -n ${AWS_ACCESS_KEY_ID} ]; then
