@@ -104,24 +104,21 @@ if [ -d "$EXIST" ]; then
 
       CERT_ARN=`aws acm import-certificate --region $AWS_REGION --certificate fileb:///etc/letsencrypt/live/$DOMAIN/cert.pem --certificate-chain fileb:///etc/letsencrypt/live/$DOMAIN/fullchain.pem --private-key fileb:///etc/letsencrypt/live/$DOMAIN/privkey.pem | jq -r .CertificateArn`
 
-      echo "CERT_ARN: $CERT_ARN"
+      if [ -n "$CERT_ARN"]; then
 
-      aws acm describe-certificate \
-        --region $AWS_REGION \
-        --certificate-arn \
-        $(aws acm list-certificates --region $AWS_REGION --query 'CertificateSummaryList[].CertificateArn' --output text)
+        echo "CERT_ARN: $CERT_ARN"
 
+        aws elbv2 add-listener-certificates \
+          --region $AWS_REGION \
+          --load-balancer-arn $ALB_ARN \
+          --listener-arn $LISTENER_PORT \
+          --certificates CertificateArn=$CERT_ARN
 
-      aws elbv2 add-listener-certificates \
-        --region $AWS_REGION \
-        --load-balancer-arn $ALB_ARN \
-        --listener-arn $LISTENER_PORT \
-        --certificates CertificateArn=$CERT_ARN
-
-      aws elbv2 describe-listeners \
-        --region $AWS_REGION \
-        --load-balancer-arn $ALB_ARN \
-        --listener-arns $LISTENER_PORT
+        aws elbv2 describe-listeners \
+          --region $AWS_REGION \
+          --load-balancer-arn $ALB_ARN \
+          --listener-arns $LISTENER_PORT
+      fi
     fi
   fi
 else
