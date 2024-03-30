@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -e
-
 # Si la variable DEBUG existe, se mostraran las órdenes y sus argumentos mientras se ejecutan.
 [ -n "${DEBUG:-}" ] && set -x
 
@@ -87,6 +85,11 @@ else
       --keep \
       -d ${DOMAIN} \
       -d ${EXPAND}
+fi
+
+if [ $? -gt	 0 ]; then
+  cat /var/log/letsencrypt/letsencrypt.log
+  exit $?
 fi
 
 EXIST="/etc/letsencrypt/live/$DOMAIN/"
