@@ -112,11 +112,12 @@ if [ -d "$EXIST" ]; then
       # If a listener does not exist for port 443, create it
       # @TODO --query 'Listeners[?Port==443].ListenerArn'
       LISTENER_ARN=$(aws elbv2 describe-listeners --load-balancer-arn "$ALB_ARN"  --output text | grep 443 | awk '{print $2}')
+
       if [[ -z "$LISTENER_ARN" ]]; then
         echo "Creating listener for port 443..."
         aws elbv2 create-listener \
           --load-balancer-arn "$ALB_ARN" \
-          --certificates "$CERT_ARN" \
+          --certificates CertificateArn=$CERT_ARN \
           --default-actions Type=forward,TargetGroupArn=$TARGET_GROUP_ARN \
           --protocol "HTTPS" \
           --port 443
@@ -124,8 +125,7 @@ if [ -d "$EXIST" ]; then
         echo "Associating certificate to listener..."
           aws elbv2 add-listener-certificates \
             --listener-arn "$LISTENER_ARN" \
-            --certificates "$CERT_ARN"
-
+            --certificates CertificateArn=$CERT_ARN
       fi
     fi
   fi
