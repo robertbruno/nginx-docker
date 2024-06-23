@@ -22,9 +22,9 @@ Create o expand a certificated
 
 where:
     -h  show this help text
-    -d  domain name to create or expand
-    -e  space separate list of domain to add to the primary domain.
-    -m  mail to notify
+    -d  domain name to create or expand [ej.: domain0.com]
+    -e  space separate list of domain to add to the primary domain. [ej.: domain1.com,domain2.com,domain3.com]
+    -m  mail to notify. [ej.: jhosnsmith@mail.com]
 "
 
 while getopts ":h:d:e:m:" opt; do
@@ -75,7 +75,11 @@ if [[ -z "$EXPAND" ]]; then
       --keep \
       -d ${DOMAIN}
 else
-    echo "Expand domain ${DOMAIN}"
+    echo "Main domain ${DOMAIN}"
+    echo "Expand domains ${EXPAND}"
+
+    EXPAND=$(echo $EXPAND | sed 's/,/ -d /g')    
+
     certbot \
       certonly \
       --verbose \
