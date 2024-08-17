@@ -53,7 +53,7 @@ Inside the `resources/utils` folder there are several files that will help you c
 * **[gzip](resources/utils/gzip)** It has the necessary instructions to enable gzip compression on the indicated domain.
 * **[host](resources/utils/host)** Allows you to enable the replication of certain headers such as the host.
 
-# webhookd
+## webhookd
 
 A very simple webhook server to launch shell scripts.
 
@@ -65,7 +65,7 @@ You can use the following environment variables to configure:
 * WHD_USER
 * WHD_PASSWD
 
-# AWS Cli
+## AWS Cli
 
 The AWS Command Line Interface (AWS CLI) is a unified tool for managing AWS services. You only need to download and configure a single tool to control multiple AWS services from the command line and automate them using scripts.
 
