@@ -52,3 +52,30 @@ Inside the `resources/utils` folder there are several files that will help you c
 
 * **[gzip](resources/utils/gzip)** It has the necessary instructions to enable gzip compression on the indicated domain.
 * **[host](resources/utils/host)** Allows you to enable the replication of certain headers such as the host.
+
+# webhookd
+
+A very simple webhook server to launch shell scripts.
+
+In this image we include this tool to have a simple administration and control mechanism, for example to update letsencrypt certificates, enable or disable configurations
+
+You can use the following environment variables to configure:
+
+* WHD_PASSWD_FILE (default: `/etc/webhookd/users.htpasswd`)
+* WHD_USER
+* WHD_PASSWD
+
+# AWS Cli
+
+The AWS Command Line Interface (AWS CLI) is a unified tool for managing AWS services. You only need to download and configure a single tool to control multiple AWS services from the command line and automate them using scripts.
+
+In this image we include this tool to have a simple integration mechanism to, for example, upload letsencrypt certificates to AWS
+
+You can use the following environment variables to configure:
+
+*  AWS_REGION (default `us-east-1`)
+*  AWS_ACCESS_KEY_ID
+*  AWS_SECRET_ACCESS_KEY
+*  ALB_ARN
+*  ALB_LISTENER_PORT (default `443`)
+*  TARGET_GROUP_ARN
