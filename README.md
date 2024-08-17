@@ -53,7 +53,7 @@ Inside the `resources/utils` folder there are several files that will help you c
 * **[gzip](resources/utils/gzip)** It has the necessary instructions to enable gzip compression on the indicated domain.
 * **[host](resources/utils/host)** Allows you to enable the replication of certain headers such as the host.
 
-## webhookd
+## Webhookd
 
 A very simple webhook server to launch shell scripts.
 
@@ -65,7 +65,46 @@ You can use the following environment variables to configure:
 * WHD_USER
 * WHD_PASSWD
 
-## AWS Cli
+### built-in scripts
+
+In this docker image we include some scripts that will allow you basic administration of some elements, for example run cerbot to create certificates or enable or disable configurations
+
+* **certbot** 
+
+It will execute the certbot command line to generate a new certificate for the indicated domain. Additionally, if the appropriate environment variables have been defined, it will upload said certificate to AWS.
+
+```bash
+curl http://localhost:8080/certbot?domain=foo.com?default_mail=foo@mail.com
+```
+
+* **nginx-find-conf**
+
+You can check the available nginx configuration
+
+```bash
+curl http://localhost:8080/nginx-find-conf
+```
+
+* **nginx-enable-conf**
+
+Allows to enable an nginx configuration file
+
+```bash
+curl http://localhost:8080/nginx-enable-conf
+```
+> For the changes to take effect it is recommended to have a volume in the container and restart the nginx service
+
+* **nginx-disable-conf**
+
+Allows to disable an nginx configuration file
+
+```bash
+curl http://localhost:8080/nx-disable-conf
+```
+
+> For the changes to take effect it is recommended to have a volume in the container and restart the nginx service
+
+## AWS cli
 
 The AWS Command Line Interface (AWS CLI) is a unified tool for managing AWS services. You only need to download and configure a single tool to control multiple AWS services from the command line and automate them using scripts.
 
