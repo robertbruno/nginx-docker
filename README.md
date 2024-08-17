@@ -1,11 +1,11 @@
 # Nginx docker
 
-Este proyecto mantiene una imagen docker de  nginx para cubrir las necesitades dadas para el proyecto tripea, tales como  balanceador de carga o proxy pass distribuido para:
+This project maintains an nginx docker image to cover basic needs, such as a load balancer or distributed proxy pass for:
 
-* Exponer servicios y aplicaciones en función de sus nombres de dominio.
-* Manejar múltiples dominios (si es necesario). Similar a "hosts virtuales".
-* Habilitar HTTPS y generar certificados automáticamente (incluidas las renovaciones) con Let's Encrypt.
-* Agregar HTTP Basic Auth para cualquier servicio que necesite proteger y que no tenga su propia seguridad, etc.
+* Expose services and applications based on their domain names.
+* Manage multiple domains (if necessary). Similar to "virtual hosts".
+* Enable HTTPS and automatically generate certificates (including renewals) with Let's Encrypt.
+* Add HTTP Basic Auth for any services you need to protect that don't have their own security, etc.
 
 ## Build
 
@@ -15,9 +15,9 @@ docker build -t nginx-docker -f Dockerfile .
 
 ## Config
 
-La configuración del nginx se encuentra en el archivo [nginx.conf](nginx.conf).
+The nginx configuration is located in the file [nginx.conf](nginx.conf).
 
-> Para mayor información visitar:
+> For more info:
 >
 > * [www.nginx.com](https://www.nginx.com/resources/wiki/start/topics/examples/full/)
 
@@ -40,7 +40,7 @@ docker stack ps nginx
 
 ## Logs
 
-Puede consultar logs de Nginx ejecute en cualquier nodo del cluster swarm la siguiente línea de comando:
+You can consult Nginx logs by running the following command line on any swarm cluster node:
 
 ```bash
 docker logs -f  --tail 100 nginx
@@ -48,7 +48,7 @@ docker logs -f  --tail 100 nginx
 
 ## Utils
 
-Dentro de la carpeta `resources/utils` hay varios archivos que le ayudaran a configurar diferentes características en el nginx, ejemplo:
+Inside the `resources/utils` folder there are several files that will help you configure different features in nginx, for example:
 
-* **[gzip](resources/utils/gzip)** Posee las instrucciones necesarias para habilitar la compresión gzip en el dominio indicado.
-* **[host](resources/utils/host)** Permite habilitar la replicación de ciertas cabeceras como el host.
+* **[gzip](resources/utils/gzip)** It has the necessary instructions to enable gzip compression on the indicated domain.
+* **[host](resources/utils/host)** Allows you to enable the replication of certain headers such as the host.
