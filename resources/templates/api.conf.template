@@ -6,18 +6,10 @@ server {
     
     set $upstream_api "${UPSTREAM_API}";
     
-    set $upstream_rabbitmq "${UPSTREAM_RABBITMQ}";
-
     location / {
         proxy_pass $upstream_api;
         include /etc/nginx/utils/host;
     }
-
-    location /rabbitmq/ {
-		rewrite ^/rabbitmq/(.*) /$1 break;
-		proxy_pass $upstream_rabbitmq;
-		include /etc/nginx/utils/host;
-	}
 
     include /etc/nginx/utils/letsencrypt;
 }
