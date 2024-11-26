@@ -25,8 +25,12 @@ COPY resources/utils /etc/nginx/utils
 COPY resources/templates /etc/nginx/templates
 COPY resources/80-webhookd.sh /docker-entrypoint.d/80-webhookd.sh
 RUN chmod +x /docker-entrypoint.d/80-webhookd.sh
-COPY resources/90-cron.sh /docker-entrypoint.d/90-cron.sh
-RUN chmod +x /docker-entrypoint.d/90-cron.sh
+# COPY resources/90-cron.sh /docker-entrypoint.d/90-cron.sh
+# RUN chmod +x /docker-entrypoint.d/90-cron.sh
+
+COPY scripts/certbot-renew.sh /usr/local/bin/certbot-renew.sh
+RUN chmod +x /usr/local/bin/certbot-renew.sh
+RUN echo "0 0 * * * root /usr/local/bin/certbot-renew.sh >> /var/log/cron.log 2>&1" >> /etc/crontab
 
 COPY resources/crontab /etc/crontab
 
@@ -43,4 +47,7 @@ ENV NGINX_RESOLVER=127.0.0.1 \
   WHD_PASSWD=
 
 # Comando para iniciar Nginx cuando se ejecute el contenedor
-CMD ["nginx", "-g", "daemon off;"]
+#CMD ["nginx", "-g", "daemon off;"]
+
+CMD service cron start && nginx -g 'daemon off;'
+
