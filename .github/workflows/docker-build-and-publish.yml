@@ -38,9 +38,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Get package.json version
+      - name: Get version
         id: get_version
-        run: echo "::set-output name=version::$(cat version)"
+        run: echo "::set-output name=version::$(cat .version)"
 
       # Install the cosign tool except on PR
       # https://github.com/sigstore/cosign-installer
