@@ -5,7 +5,7 @@ set -e
 # If the DEBUG variable exists, the commands and their arguments will be displayed while they are executed.
 [ -n "${DEBUG:-}" ] && set -x
 
-export DEFAULT_MAIL=${default_mail:-""}
+export DEFAULT_MAIL=${DEFAULT_MAIL:-""}
 export AWS_REGION=${AWS_REGION:-"us-east-1"}
 export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-""}
 export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-""}
@@ -18,6 +18,12 @@ export CERT_DIR=${CERT_DIR:-"/etc/letsencrypt/live"}
 
 # List of domains (directory in CERT_DIR) to process
 DOMAINS=($(ls $CERT_DIR))
+
+
+if [ -n "$$mail" ]; then
+  DEFAULT_MAIL="$mail"
+  echo "MAIL has been assigned from default_mail: $DEFAULT_MAIL"
+fi
 
 
 usage="

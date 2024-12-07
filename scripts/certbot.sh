@@ -5,7 +5,7 @@ set -e
 # If the DEBUG variable exists, the commands and their arguments will be displayed while they are executed.
 [ -n "${DEBUG:-}" ] && set -x
 
-export DEFAULT_MAIL=${default_mail:-""}
+export DEFAULT_MAIL=${DEFAULT_MAIL:-""}
 export EXPAND=${expnad:-}
 export DOMAIN=${domain:-}
 export AWS_REGION=${AWS_REGION:-"us-east-1"}
@@ -14,6 +14,12 @@ export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-""}
 export ALB_ARN=${ALB_ARN:-}
 export ALB_LISTENER_PORT="443"
 export TARGET_GROUP_ARN=${TARGET_GROUP_ARN:-}
+
+if [ -n "$mail" ]; then
+  DEFAULT_MAIL="$mail"
+  echo "MAIL has been assigned from default_mail: $DEFAULT_MAIL"
+fi
+
 
 usage="
 $(basename "$0") [-d domain] [-e expand]

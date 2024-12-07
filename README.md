@@ -69,12 +69,36 @@ You can use the following environment variables to configure:
 
 In this docker image we include some scripts that will allow you basic administration of some elements, for example run cerbot to create certificates or enable or disable configurations
 
+You can use the following environment variables to configure:
+
+*  DEFAULT_MAIL
+
 * **certbot** 
 
 It will execute the certbot command line to generate a new certificate for the indicated domain. Additionally, if the appropriate environment variables have been defined, it will upload said certificate to AWS.
 
 ```bash
-curl http://localhost:8080/certbot?domain=foo.com&default_mail=foo@mail.com
+curl http://localhost:8080/certbot?domain=foo.com&mail=foo@mail.com
+```
+
+> the mail parameter overwrites the value of the **DEFAULT_MAIL**  variable
+
+* **cercertbot-renew** 
+
+It will execute the certbot command line to update certificate for the indicated domain. Additionally, if the appropriate environment variables have been defined, it will upload said certificate to AWS.
+
+```bash
+curl http://localhost:8080/cercertbot-renew?domain=foo.com&mail=foo@mail.com
+```
+
+> the mail parameter overwrites the value of the **DEFAULT_MAIL**  variable
+
+* **cerccertbot-cli** 
+
+List locally installed letsencrypt certificates
+
+```bash
+curl http://localhost:8080/certbot-cli
 ```
 
 * **nginx-find-conf**
