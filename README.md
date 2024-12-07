@@ -74,7 +74,7 @@ In this docker image we include some scripts that will allow you basic administr
 It will execute the certbot command line to generate a new certificate for the indicated domain. Additionally, if the appropriate environment variables have been defined, it will upload said certificate to AWS.
 
 ```bash
-curl http://localhost:8080/certbot?domain=foo.com?default_mail=foo@mail.com
+curl http://localhost:8080/certbot?domain=foo.com&default_mail=foo@mail.com
 ```
 
 * **nginx-find-conf**
