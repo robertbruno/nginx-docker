@@ -1,180 +1,201 @@
-# Nginx docker
+# Nginx Docker
 
-This project maintains an nginx docker image to cover basic needs, such as a load balancer or distributed proxy pass for:
+Imagen Docker de Nginx con herramientas integradas para gestion de certificados SSL, administracion via webhookd y mantenimiento automatizado de infraestructura AWS.
 
-* Expose services and applications based on their domain names.
-* Manage multiple domains (if necessary). Similar to "virtual hosts".
-* Enable HTTPS and automatically generate certificates (including renewals) with Let's Encrypt.
-* Add HTTP Basic Auth for any services you need to protect that don't have their own security, etc.
+## Funcionalidades
+
+- Reverse proxy y balanceo de carga basado en dominios (virtual hosts)
+- Certificados SSL automaticos con Let's Encrypt (certbot)
+- Renovacion y limpieza automatica de certificados via cron
+- Administracion remota via webhookd (API HTTP con autenticacion)
+- Panel administrativo web en `/ops`
+- Mantenimiento automatico de Target Groups en AWS ALB
+- Integracion con AWS ACM para importacion de certificados
 
 ## Build
 
 ```bash
-docker build -t nginx-docker -f Dockerfile .
+docker build -t nginx-docker .
 ```
-
-## Config
-
-The nginx configuration is located in the file [nginx.conf](nginx.conf).
-
-> For more info:
->
-> * [www.nginx.com](https://www.nginx.com/resources/wiki/start/topics/examples/full/)
-
 
 ## Run
 
 ```bash
-docker run --rm --name  nginx -p 80:80 -p 443:443 \
-    -e  DOMAIN=dominio.com \
+docker run --rm --name nginx \
+    -p 80:80 -p 443:443 -p 8080:8080 \
+    -e FQDN_WEBAPP=admin.example.com \
+    -e UPSTREAM_WEBAPP=http://webapp:80 \
+    -e FQDN_API=api.example.com \
+    -e UPSTREAM_API=http://api:3000 \
+    -e WHD_USER=admin \
+    -e WHD_PASSWD=secreto \
     nginx-docker
 ```
 
-## Check it
+## Variables de entorno
 
-* Check if the stack was deployed with:
+### Nginx
+
+| Variable | Default | Descripcion |
+|----------|---------|-------------|
+| `NGINX_RESOLVER` | `127.0.0.1` | Resolver DNS para nginx |
+| `FQDN_*` | -- | Dominio para cada servicio (WEBAPP, API, etc.) |
+| `UPSTREAM_*` | -- | URL del upstream para cada servicio |
+
+### Webhookd
+
+| Variable | Default | Descripcion |
+|----------|---------|-------------|
+| `WHD_USER` | `webhookd` | Usuario para autenticacion HTTP Basic |
+| `WHD_PASSWD` | -- | Password para autenticacion |
+| `WHD_PASSWD_FILE` | `/etc/webhookd/users.htpasswd` | Archivo htpasswd |
+| `WHD_HOOK_TIMEOUT` | `300` | Timeout en segundos para ejecucion de hooks |
+
+### AWS
+
+| Variable | Default | Descripcion |
+|----------|---------|-------------|
+| `AWS_REGION` | `us-east-1` | Region AWS |
+| `AWS_ACCESS_KEY_ID` | -- | Credenciales AWS |
+| `AWS_SECRET_ACCESS_KEY` | -- | Credenciales AWS |
+| `ALB_ARN` | -- | ARN del Application Load Balancer |
+| `ALB_LISTENER_PORT` | `443` | Puerto del listener HTTPS |
+| `TARGET_GROUP_ARN` | -- | ARN del Target Group principal |
+| `DEFAULT_MAIL` | `test@mail.com` | Email para certificados Let's Encrypt |
+
+## Panel administrativo
+
+Accesible en `http://<host>/ops/`. Interfaz web que permite:
+
+- Ver configuraciones nginx activas y deshabilitadas
+- Consultar y renovar certificados SSL (certbot)
+- Diagnosticar y corregir Target Groups del ALB
+- Ejecutar hooks de webhookd
+- Verificar conectividad
+
+Las operaciones requieren autenticacion con las mismas credenciales de webhookd. El panel se sirve como archivo estatico por nginx y las llamadas API pasan por un proxy reverso a webhookd en `/ops/api/`.
+
+## Webhookd - Hooks disponibles
+
+Todos los hooks requieren HTTP Basic Auth y estan disponibles en el puerto 8080.
+
+### Certificados
 
 ```bash
-docker stack ps nginx
+# Crear certificado para un dominio
+curl -u user:pass "http://host:8080/certbot?domain=example.com&mail=admin@example.com"
+
+# Renovar certificados existentes
+curl -u user:pass "http://host:8080/certbot-renew"
+
+# Listar certificados instalados
+curl -u user:pass "http://host:8080/certbot-cli?params=certificates"
+
+# Revocar certificado
+curl -u user:pass "http://host:8080/certbot-revoke?domain=example.com"
 ```
 
-## Logs
-
-You can consult Nginx logs by running the following command line on any swarm cluster node:
+### Configuracion Nginx
 
 ```bash
-docker logs -f  --tail 100 nginx
+# Listar configuraciones
+curl -u user:pass "http://host:8080/nginx-find-conf"
+
+# Ver contenido de una configuracion
+curl -u user:pass "http://host:8080/nginx-show-conf?pattern=api"
+
+# Habilitar configuracion
+curl -u user:pass "http://host:8080/nginx-enable-conf?pattern=api.https"
+
+# Deshabilitar configuracion
+curl -u user:pass "http://host:8080/nginx-disable-conf?pattern=api.https"
+
+# Recargar nginx
+curl -u user:pass "http://host:8080/nginx-reload"
+```
+
+### Target Groups (AWS ALB)
+
+```bash
+# Diagnostico y auto-correccion de targets
+curl -u user:pass "http://host:8080/update-targets"
+```
+
+## Cron jobs
+
+La imagen ejecuta tres tareas automaticas:
+
+| Frecuencia | Script | Funcion |
+|------------|--------|---------|
+| Diario 00:00 | `certbot-renew.sh` | Renueva certificados Let's Encrypt e importa a AWS ACM |
+| Semanal dom 03:00 | `delete-expired-certificates.sh` | Elimina certificados expirados de ACM y listeners del ALB |
+| Cada 5 min | `update-targets.sh` | Detecta la IP actual del contenedor y corrige targets unhealthy en los Target Groups del ALB |
+
+## Configuracion Nginx con templates
+
+Los archivos en `/etc/nginx/templates/*.template` se procesan automaticamente con `envsubst` al iniciar el contenedor. El resultado se escribe en `/etc/nginx/conf.d/`.
+
+Ejemplo de template:
+
+```nginx
+server {
+    listen 80;
+    server_name ${FQDN_API};
+
+    set $upstream_api "${UPSTREAM_API}";
+
+    location / {
+        proxy_pass $upstream_api;
+        include /etc/nginx/utils/host;
+        include /etc/nginx/utils/gzip;
+    }
+
+    include /etc/nginx/utils/letsencrypt;
+}
 ```
 
 ## Utils
 
-Inside the `resources/utils` folder there are several files that will help you configure different features in nginx, for example:
+Archivos de configuracion reutilizables en `resources/utils/`:
 
-* **[gzip](resources/utils/gzip)** It has the necessary instructions to enable gzip compression on the indicated domain.
-* **[host](resources/utils/host)** Allows you to enable the replication of certain headers such as the host.
+- **gzip** - Habilita compresion gzip
+- **host** - Replica headers del cliente al upstream (Host, X-Real-IP, X-Forwarded-For)
+- **ssl** - Configuracion SSL/TLS
+- **letsencrypt** - Location block para validacion ACME de Let's Encrypt
 
-## Webhookd
-
-A very simple webhook server to launch shell scripts.
-
-In this image we include this tool to have a simple administration and control mechanism, for example to update letsencrypt certificates, enable or disable configurations
-
-You can use the following environment variables to configure:
-
-* WHD_PASSWD_FILE (default: `/etc/webhookd/users.htpasswd`)
-* WHD_USER
-* WHD_PASSWD
-
-### built-in scripts
-
-In this docker image we include some scripts that will allow you basic administration of some elements, for example run cerbot to create certificates or enable or disable configurations
-
-You can use the following environment variables to configure:
-
-*  DEFAULT_MAIL
-
-* **certbot** 
-
-It will execute the certbot command line to generate a new certificate for the indicated domain. Additionally, if the appropriate environment variables have been defined, it will upload said certificate to AWS.
-
-```bash
-curl http://localhost:8080/certbot?domain=foo.com&mail=foo@mail.com
-```
-
-> the mail parameter overwrites the value of the **DEFAULT_MAIL**  variable
-
-* **cercertbot-renew** 
-
-It will execute the certbot command line to update certificate for the indicated domain. Additionally, if the appropriate environment variables have been defined, it will upload said certificate to AWS.
-
-```bash
-curl http://localhost:8080/cercertbot-renew?domain=foo.com&mail=foo@mail.com
-```
-
-> the mail parameter overwrites the value of the **DEFAULT_MAIL**  variable
-
-* **cerccertbot-cli** 
-
-List locally installed letsencrypt certificates
-
-```bash
-curl http://localhost:8080/certbot-cli
-```
-
-* **nginx-find-conf**
-
-You can check the available nginx configuration
-
-```bash
-curl http://localhost:8080/nginx-find-conf
-```
-
-* **nginx-enable-conf**
-
-Allows to enable an nginx configuration file
-
-```bash
-curl http://localhost:8080/nginx-enable-conf
-```
-> For the changes to take effect it is recommended to have a volume in the container and restart the nginx service
-
-* **nginx-disable-conf**
-
-Allows to disable an nginx configuration file
-
-```bash
-curl http://localhost:8080/nx-disable-conf
-```
-
-> For the changes to take effect it is recommended to have a volume in the container and restart the nginx service
-
-## AWS cli
-
-The AWS Command Line Interface (AWS CLI) is a unified tool for managing AWS services. You only need to download and configure a single tool to control multiple AWS services from the command line and automate them using scripts.
-
-In this image we include this tool to have a simple integration mechanism to, for example, upload letsencrypt certificates to AWS
-
-You can use the following environment variables to configure:
-
-*  AWS_REGION (default `us-east-1`)
-*  AWS_ACCESS_KEY_ID
-*  AWS_SECRET_ACCESS_KEY
-*  ALB_ARN
-*  ALB_LISTENER_PORT (default `443`)
-*  TARGET_GROUP_ARN
-
-## Using environment variables in nginx configuration
-
-Out-of-the-box, nginx doesn't support environment variables inside most configuration blocks. But this image has a function, which will extract environment variables before nginx starts.
-
-Here is an example using docker-compose.yml:
-
-```yaml
-web:
-  image: nginx
-  volumes:
-   - ./templates:/etc/nginx/templates
-  ports:
-   - "8080:80"
-  environment:
-   - NGINX_HOST=foobar.com
-   - NGINX_PORT=80
-```
-
-By default, this function reads template files in `/etc/nginx/templates/*.template` and outputs the result of executing envsubst to `/etc/nginx/conf.d`.
-
-So if you place `templates/default.conf.template` file, which contains variable references like this:
+## Estructura del proyecto
 
 ```
-listen       ${NGINX_PORT};
+.
+├── Dockerfile
+├── nginx.conf
+├── resources/
+│   ├── 80-webhookd.sh          # Entrypoint: inicia webhookd
+│   ├── 90-cron.sh              # Entrypoint: inicia cron
+│   ├── admin/
+│   │   └── index.html          # Panel administrativo
+│   ├── crontab                 # Definicion de cron jobs
+│   ├── templates/              # Templates de configuracion nginx
+│   │   ├── default.conf.template
+│   │   ├── api.conf.template
+│   │   ├── api.https.conf.disabled.template
+│   │   ├── webapp.conf.template
+│   │   └── webapp.https.conf.disabled.template
+│   └── utils/                  # Includes reutilizables
+│       ├── gzip
+│       ├── host
+│       ├── letsencrypt
+│       └── ssl
+└── scripts/
+    ├── certbot.sh              # Crear certificados
+    ├── certbot-cli.sh          # Consultar certificados
+    ├── certbot-renew.sh        # Renovar certificados + ACM
+    ├── certbot-revoke.sh       # Revocar certificados
+    ├── delete-expired-certificates.sh  # Limpiar ACM
+    ├── nginx-disable-conf.sh   # Deshabilitar config
+    ├── nginx-enable-conf.sh    # Habilitar config
+    ├── nginx-find-conf.sh      # Listar configs
+    ├── nginx-reload.sh         # Recargar nginx
+    ├── nginx-show-conf.sh      # Ver contenido de config
+    └── update-targets.sh       # Mantener targets del ALB
 ```
-
-outputs to `/etc/nginx/conf.d/default.conf` like this:
-
-```
-listen       80;
-```
-
-> Directory which contains template files by default is `/etc/nginx/templates`. For more info:
->
-> * [Nginx Docker Official Image](https://hub.docker.com/_/nginx)
