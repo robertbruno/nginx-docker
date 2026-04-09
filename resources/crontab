@@ -1,4 +1,4 @@
-SHELL=/bin/sh
-PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
-0 0 * * * root curl http://localhost:8080/certbot-renew
+0 0 * * *  /scripts/certbot-renew.sh > /proc/1/fd/1 2>/proc/1/fd/2
+0 3 * * 0  /scripts/delete-expired-certificates.sh > /proc/1/fd/1 2>/proc/1/fd/2
+*/5 * * * * /scripts/update-targets.sh > /proc/1/fd/1 2>/proc/1/fd/2

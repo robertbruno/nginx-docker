@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nginx Operations Panel</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0f172a;--surface:#1e293b;--surface2:#334155;--border:#475569;
+  --text:#e2e8f0;--muted:#94a3b8;--accent:#3b82f6;--accent-h:#2563eb;
+  --green:#22c55e;--red:#ef4444;--yellow:#eab308;--cyan:#06b6d4;
+  --radius:8px;--shadow:0 4px 6px -1px rgba(0,0,0,.3);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+a{color:var(--accent);text-decoration:none}
+
+/* Header */
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem}
+.header h1{font-size:1.25rem;font-weight:600;display:flex;align-items:center;gap:.5rem}
+.header h1 .dot{width:10px;height:10px;border-radius:50%;background:var(--green);display:inline-block}
+.header-actions{display:flex;gap:.5rem;align-items:center}
+.badge{font-size:.7rem;padding:2px 8px;border-radius:12px;background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+
+/* Auth bar */
+.auth-bar{background:var(--surface);padding:.75rem 1.5rem;border-bottom:1px solid var(--border);display:flex;gap:.75rem;align-items:center;flex-wrap:wrap}
+.auth-bar input{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:.4rem .6rem;border-radius:var(--radius);font-size:.85rem;width:140px}
+.auth-bar input::placeholder{color:var(--muted)}
+.btn{padding:.4rem .8rem;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;font-size:.85rem;transition:all .15s}
+.btn:hover{background:var(--border)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent-h)}
+.btn-sm{padding:.25rem .5rem;font-size:.75rem}
+.auth-status{font-size:.8rem;color:var(--muted)}
+
+/* Layout */
+.container{max-width:1400px;margin:0 auto;padding:1rem}
+.tabs{display:flex;gap:2px;background:var(--surface);border-radius:var(--radius);padding:4px;margin-bottom:1rem;overflow-x:auto}
+.tab{padding:.5rem 1rem;border-radius:6px;cursor:pointer;font-size:.85rem;white-space:nowrap;color:var(--muted);transition:all .15s;border:none;background:none}
+.tab:hover{color:var(--text)}
+.tab.active{background:var(--accent);color:#fff}
+
+/* Cards */
+.panel{display:none}
+.panel.active{display:block}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:1rem;box-shadow:var(--shadow)}
+.card-header{padding:.75rem 1rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.card-header h3{font-size:.9rem;font-weight:600}
+.card-body{padding:1rem}
+.card-body pre{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:.75rem;font-size:.8rem;overflow-x:auto;white-space:pre-wrap;word-break:break-all;max-height:500px;overflow-y:auto;line-height:1.5;color:var(--muted)}
+
+/* Table */
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th{text-align:left;padding:.5rem .75rem;color:var(--muted);font-weight:500;border-bottom:1px solid var(--border);font-size:.75rem;text-transform:uppercase;letter-spacing:.5px}
+td{padding:.5rem .75rem;border-bottom:1px solid rgba(71,85,105,.3)}
+tr:hover td{background:rgba(59,130,246,.05)}
+
+/* Status indicators */
+.status{display:inline-flex;align-items:center;gap:4px;font-size:.8rem;font-weight:500}
+.status::before{content:'';width:8px;height:8px;border-radius:50%}
+.status-healthy::before{background:var(--green)}
+.status-unhealthy::before{background:var(--red)}
+.status-draining::before{background:var(--yellow)}
+.status-unknown::before{background:var(--muted)}
+
+/* Grid */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;text-align:center}
+.stat-value{font-size:1.5rem;font-weight:700;margin:.25rem 0}
+.stat-label{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+
+/* Loading & messages */
+.loading{text-align:center;padding:2rem;color:var(--muted)}
+.loading::after{content:'';display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite;margin-left:.5rem;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:2rem;color:var(--muted);font-size:.9rem}
+.error-msg{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--red);padding:.75rem;border-radius:var(--radius);font-size:.85rem;margin-bottom:.5rem}
+.success-msg{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:var(--green);padding:.75rem;border-radius:var(--radius);font-size:.85rem;margin-bottom:.5rem}
+
+/* Actions row */
+.actions-row{display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap}
+
+/* Responsive */
+@media(max-width:768px){
+  .grid-2,.grid-3{grid-template-columns:1fr}
+  .header{padding:.75rem 1rem}
+  .container{padding:.75rem}
+  .auth-bar{padding:.5rem 1rem}
+  .auth-bar input{width:110px}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1><span class="dot" id="connDot"></span> Nginx Ops</h1>
+  <div class="header-actions">
+    <span class="badge" id="regionBadge">--</span>
+    <span class="badge" id="albBadge">--</span>
+  </div>
+</div>
+
+<div class="auth-bar">
+  <input type="text" id="authUser" placeholder="Usuario" autocomplete="username">
+  <input type="password" id="authPass" placeholder="Password" autocomplete="current-password">
+  <button class="btn btn-primary btn-sm" onclick="authenticate()">Conectar</button>
+  <span class="auth-status" id="authStatus">Sin autenticar</span>
+</div>
+
+<div class="container">
+  <div class="tabs" id="tabBar">
+    <button class="tab active" data-tab="overview">Overview</button>
+    <button class="tab" data-tab="targets">Targets</button>
+    <button class="tab" data-tab="certs">Certificados</button>
+    <button class="tab" data-tab="configs">Configs</button>
+    <button class="tab" data-tab="connectivity">Conectividad</button>
+    <button class="tab" data-tab="tools">Herramientas</button>
+  </div>
+
+  <!-- Overview -->
+  <div class="panel active" id="panel-overview">
+    <div class="grid-3" id="overviewStats">
+      <div class="stat-card"><div class="stat-label">Configs Activas</div><div class="stat-value" id="statHealthy">--</div></div>
+      <div class="stat-card"><div class="stat-label">Configs Deshabilitadas</div><div class="stat-value" id="statUnhealthy" style="color:var(--yellow)">--</div></div>
+      <div class="stat-card"><div class="stat-label">Certificados SSL</div><div class="stat-value" id="statCerts">--</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3>Configuraciones Nginx</h3><button class="btn btn-sm" onclick="loadOverview()">Actualizar</button></div>
+      <div class="card-body" id="overviewTargets"><div class="empty">Conecta para ver el estado</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3>Certificados Certbot</h3></div>
+      <div class="card-body" id="overviewCerts"><div class="empty">--</div></div>
+    </div>
+  </div>
+
+  <!-- Targets -->
+  <div class="panel" id="panel-targets">
+    <div class="actions-row">
+      <button class="btn btn-primary" onclick="loadTargets()">Diagnostico</button>
+      <button class="btn" onclick="fixTargets()" style="border-color:var(--yellow);color:var(--yellow)">Fix Targets</button>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3>Target Groups del ALB</h3></div>
+      <div class="card-body" id="targetsContent"><div class="empty">Ejecuta diagnostico para ver los target groups</div></div>
+    </div>
+  </div>
+
+  <!-- Certs -->
+  <div class="panel" id="panel-certs">
+    <div class="actions-row">
+      <button class="btn btn-primary" onclick="loadCertbot()">Certbot Certificates</button>
+      <button class="btn" onclick="renewCerts()">Renovar Certificados</button>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3>Certificados Certbot (Let's Encrypt)</h3></div>
+      <div class="card-body" id="certbotContent"><div class="empty">Consulta los certificados activos</div></div>
+    </div>
+  </div>
+
+  <!-- Configs -->
+  <div class="panel" id="panel-configs">
+    <div class="actions-row">
+      <button class="btn btn-primary" onclick="loadConfigs()">Listar Configs</button>
+      <button class="btn" onclick="reloadNginx()">Reload Nginx</button>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3>Configuraciones Nginx activas</h3></div>
+      <div class="card-body" id="configsList"><div class="empty">Consulta las configuraciones activas</div></div>
+    </div>
+    <div id="configDetails"></div>
+  </div>
+
+  <!-- Connectivity -->
+  <div class="panel" id="panel-connectivity">
+    <div class="actions-row">
+      <button class="btn btn-primary" onclick="checkConnectivity()">Verificar Conectividad</button>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3>Puertos ALB</h3></div>
+      <div class="card-body" id="connPorts"><div class="empty">Ejecuta la verificacion</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3>Dominios</h3></div>
+      <div class="card-body" id="connDomains"><div class="empty">--</div></div>
+    </div>
+  </div>
+
+  <!-- Tools -->
+  <div class="panel" id="panel-tools">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header"><h3>Ejecutar Hook</h3></div>
+        <div class="card-body">
+          <select id="hookSelect" style="width:100%;padding:.4rem;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);margin-bottom:.5rem">
+            <option value="certbot-cli?params=certificates">certbot certificates</option>
+            <option value="certbot-renew">certbot renew</option>
+            <option value="nginx-reload">nginx reload</option>
+            <option value="nginx-find-conf">nginx find configs</option>
+            <option value="update-targets">update targets</option>
+          </select>
+          <input type="text" id="hookParams" placeholder="Parametros adicionales (opcional)" style="width:100%;padding:.4rem;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);margin-bottom:.5rem">
+          <button class="btn btn-primary" onclick="runHook()">Ejecutar</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>Nginx Config Viewer</h3></div>
+        <div class="card-body">
+          <input type="text" id="confPattern" placeholder="Patron (api, webapp, default...)" style="width:100%;padding:.4rem;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);margin-bottom:.5rem">
+          <button class="btn btn-primary" onclick="showConf()">Ver Config</button>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:1rem">
+      <div class="card-header"><h3>Output</h3><button class="btn btn-sm" onclick="document.getElementById('toolsOutput').textContent=''">Limpiar</button></div>
+      <div class="card-body"><pre id="toolsOutput">Resultado aparecera aqui...</pre></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_BASE = '/ops/api';
+let authHeader = '';
+
+// Auth
+function authenticate() {
+  const user = document.getElementById('authUser').value;
+  const pass = document.getElementById('authPass').value;
+  if (!user || !pass) return;
+  authHeader = 'Basic ' + btoa(user + ':' + pass);
+  document.getElementById('authStatus').textContent = 'Verificando...';
+
+  apiCall('/nginx-find-conf').then(r => {
+    document.getElementById('authStatus').textContent = 'Conectado como ' + user;
+    document.getElementById('authStatus').style.color = 'var(--green)';
+    document.getElementById('connDot').style.background = 'var(--green)';
+    loadOverview();
+  }).catch(e => {
+    document.getElementById('authStatus').textContent = 'Error: ' + e.message;
+    document.getElementById('authStatus').style.color = 'var(--red)';
+    document.getElementById('connDot').style.background = 'var(--red)';
+    authHeader = '';
+  });
+}
+
+function apiCall(endpoint) {
+  if (!authHeader) return Promise.reject(new Error('No autenticado'));
+  return fetch(API_BASE + endpoint, {
+    headers: { 'Authorization': authHeader }
+  }).then(r => {
+    if (r.status === 401) throw new Error('Credenciales invalidas');
+    return r.text();
+  });
+}
+
+// Tabs
+document.getElementById('tabBar').addEventListener('click', e => {
+  if (!e.target.classList.contains('tab')) return;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  e.target.classList.add('active');
+  document.getElementById('panel-' + e.target.dataset.tab).classList.add('active');
+});
+
+// Overview
+async function loadOverview() {
+  const tgEl = document.getElementById('overviewTargets');
+  const certEl = document.getElementById('overviewCerts');
+
+  // Configs nginx (rapido, indica que el servicio esta activo)
+  tgEl.innerHTML = '<div class="loading">Consultando configuraciones</div>';
+  try {
+    const confData = await apiCall('/nginx-find-conf');
+    const confs = confData.trim().split('\n').filter(l => l.length > 0);
+    const activeConfs = confs.filter(c => !c.includes('.disabled'));
+    const disabledConfs = confs.filter(c => c.includes('.disabled'));
+    document.getElementById('statHealthy').textContent = activeConfs.length;
+    document.getElementById('statUnhealthy').textContent = disabledConfs.length;
+
+    let html = '<table><tr><th>Configuracion</th><th>Estado</th></tr>';
+    confs.forEach(c => {
+      const name = c.split('/').pop();
+      const disabled = c.includes('.disabled');
+      html += '<tr><td>' + escapeHtml(name) + '</td><td><span class="status ' +
+        (disabled ? 'status-unhealthy">Deshabilitado' : 'status-healthy">Activo') +
+        '</span></td></tr>';
+    });
+    html += '</table>';
+    tgEl.innerHTML = html;
+  } catch(e) {
+    tgEl.innerHTML = '<div class="error-msg">' + e.message + '</div>';
+  }
+
+  // Certificados certbot (relativamente rapido, es local)
+  certEl.innerHTML = '<div class="loading">Consultando certificados</div>';
+  try {
+    const certData = await apiCall('/certbot-cli?params=certificates');
+    certEl.innerHTML = '<pre>' + escapeHtml(certData) + '</pre>';
+    const certCount = (certData.match(/Certificate Name:/gi) || []).length;
+    document.getElementById('statCerts').textContent = certCount;
+  } catch(e) {
+    certEl.innerHTML = '<div class="error-msg">' + e.message + '</div>';
+  }
+
+  document.getElementById('regionBadge').textContent = 'us-east-1';
+}
+
+// Targets
+async function loadTargets() {
+  const el = document.getElementById('targetsContent');
+  el.innerHTML = '<div class="loading">Ejecutando diagnostico</div>';
+  try {
+    const data = await apiCall('/update-targets');
+    el.innerHTML = '<pre>' + escapeHtml(data) + '</pre>';
+  } catch(e) {
+    el.innerHTML = '<div class="error-msg">' + e.message + '</div>';
+  }
+}
+
+async function fixTargets() {
+  if (!confirm('Esto actualizara los targets del ALB. Continuar?')) return;
+  const el = document.getElementById('targetsContent');
+  el.innerHTML = '<div class="loading">Corrigiendo targets</div>';
+  try {
+    const data = await apiCall('/update-targets');
+    el.innerHTML = '<div class="success-msg">Targets actualizados</div><pre>' + escapeHtml(data) + '</pre>';
+  } catch(e) {
+    el.innerHTML = '<div class="error-msg">' + e.message + '</div>';
+  }
+}
+
+// Certs
+async function loadCertbot() {
+  const el = document.getElementById('certbotContent');
+  el.innerHTML = '<div class="loading">Consultando certbot</div>';
+  try {
+    const data = await apiCall('/certbot-cli?params=certificates');
+    el.innerHTML = '<pre>' + escapeHtml(data) + '</pre>';
+  } catch(e) {
+    el.innerHTML = '<div class="error-msg">' + e.message + '</div>';
+  }
+}
+
+async function renewCerts() {
+  if (!confirm('Iniciar renovacion de certificados?')) return;
+  const el = document.getElementById('certbotContent');
+  el.innerHTML = '<div class="loading">Renovando certificados (puede tardar)</div>';
+  try {
+    const data = await apiCall('/certbot-renew');
+    el.innerHTML = '<div class="success-msg">Renovacion completada</div><pre>' + escapeHtml(data) + '</pre>';
+  } catch(e) {
+    el.innerHTML = '<div class="error-msg">' + e.message + '</div>';
+  }
+}
+
+// Configs
+async function loadConfigs() {
+  const el = document.getElementById('configsList');
+  el.innerHTML = '<div class="loading">Listando configuraciones</div>';
+  try {
+    const data = await apiCall('/nginx-find-conf');
+    el.innerHTML = '<pre>' + escapeHtml(data) + '</pre>';
+  } catch(e) {
+    el.innerHTML = '<div class="error-msg">' + e.message + '</div>';
+  }
+}
+
+async function reloadNginx() {
+  if (!confirm('Recargar configuracion de Nginx?')) return;
+  try {
+    const data = await apiCall('/nginx-reload');
+    const el = document.getElementById('configsList');
+    el.innerHTML = '<div class="success-msg">Nginx recargado</div><pre>' + escapeHtml(data) + '</pre>';
+  } catch(e) {
+    alert('Error: ' + e.message);
+  }
+}
+
+// Connectivity
+async function checkConnectivity() {
+  const portsEl = document.getElementById('connPorts');
+  const domainsEl = document.getElementById('connDomains');
+  portsEl.innerHTML = '<div class="loading">Verificando puertos</div>';
+  domainsEl.innerHTML = '<div class="loading">Verificando dominios</div>';
+
+  try {
+    // Check ports via direct fetch timing
+    const ports = [80, 8080, 443];
+    let portsHtml = '<table><tr><th>Puerto</th><th>Estado</th><th>Tiempo</th></tr>';
+
+    for (const port of [80, 8080]) {
+      const start = performance.now();
+      try {
+        const r = await fetch(window.location.protocol + '//' + window.location.hostname + ':' + port + '/', {
+          mode: 'no-cors',
+          signal: AbortSignal.timeout(5000)
+        });
+        const ms = Math.round(performance.now() - start);
+        portsHtml += '<tr><td>:' + port + '</td><td><span class="status status-healthy">Accesible</span></td><td>' + ms + 'ms</td></tr>';
+      } catch(e) {
+        const ms = Math.round(performance.now() - start);
+        portsHtml += '<tr><td>:' + port + '</td><td><span class="status status-unhealthy">No accesible</span></td><td>' + ms + 'ms</td></tr>';
+      }
+    }
+    portsHtml += '</table>';
+    portsEl.innerHTML = portsHtml;
+  } catch(e) {
+    portsEl.innerHTML = '<div class="error-msg">' + e.message + '</div>';
+  }
+
+  // Domains via nginx-find-conf as connectivity proxy
+  try {
+    const data = await apiCall('/nginx-find-conf');
+    domainsEl.innerHTML = '<pre>' + escapeHtml(data) + '</pre>';
+  } catch(e) {
+    domainsEl.innerHTML = '<div class="error-msg">' + e.message + '</div>';
+  }
+}
+
+// Tools
+async function runHook() {
+  const hook = document.getElementById('hookSelect').value;
+  const params = document.getElementById('hookParams').value;
+  const el = document.getElementById('toolsOutput');
+  el.textContent = 'Ejecutando ' + hook + '...\n';
+  try {
+    let url = '/' + hook;
+    if (params) url += (url.includes('?') ? '&' : '?') + 'params=' + encodeURIComponent(params);
+    const data = await apiCall(url);
+    el.textContent = data;
+  } catch(e) {
+    el.textContent = 'ERROR: ' + e.message;
+  }
+}
+
+async function showConf() {
+  const pattern = document.getElementById('confPattern').value;
+  if (!pattern) return;
+  const el = document.getElementById('toolsOutput');
+  el.textContent = 'Buscando ' + pattern + '...\n';
+  try {
+    const data = await apiCall('/nginx-show-conf?pattern=' + encodeURIComponent(pattern));
+    el.textContent = data;
+  } catch(e) {
+    el.textContent = 'ERROR: ' + e.message;
+  }
+}
+
+// Utils
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Auto-load saved credentials
+(function() {
+  try {
+    const saved = sessionStorage.getItem('ops_auth');
+    if (saved) {
+      const [u, p] = atob(saved).split(':');
+      document.getElementById('authUser').value = u;
+      document.getElementById('authPass').value = p;
+    }
+  } catch(e) {}
+})();
+
+// Save credentials on successful auth
+const origAuth = authenticate;
+authenticate = function() {
+  const user = document.getElementById('authUser').value;
+  const pass = document.getElementById('authPass').value;
+  origAuth();
+  try { sessionStorage.setItem('ops_auth', btoa(user + ':' + pass)); } catch(e) {}
+};
+</script>
+</body>
+</html>
