@@ -1,0 +1,12 @@
+# AI Assistant (FastAPI chat) — assistant.kumulantech.com
+server {
+    listen 80;
+    server_name ${FQDN_KUMULANTECH_ASSISTANT};
+
+    set $upstream_ai "${UPSTREAM_AI}";
+
+    location / {
+        proxy_pass $upstream_ai;
+        include /etc/nginx/utils/host;
+    }
+}

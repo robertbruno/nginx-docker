@@ -1,0 +1,20 @@
+# WebAdmin (Angular) — web.kumulantech.com + apex
+# TLS terminates at ALB (443, ACM). Nginx sees HTTP only (port 80 internal).
+server {
+    listen 80;
+    server_name ${FQDN_KUMULANTECH};
+
+    set $upstream_webapp "${UPSTREAM_WEBAPP}";
+
+    location / {
+        proxy_pass $upstream_webapp;
+        include /etc/nginx/utils/host;
+        include /etc/nginx/utils/gzip;
+    }
+
+    location /health {
+        access_log off;
+        return 200 'ok';
+        add_header Content-Type text/plain;
+    }
+}

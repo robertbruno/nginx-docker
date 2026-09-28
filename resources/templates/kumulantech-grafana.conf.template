@@ -1,0 +1,17 @@
+# Grafana dashboards — grafana.kumulantech.com
+server {
+    listen 80;
+    server_name ${FQDN_KUMULANTECH_GRAFANA};
+
+    set $upstream_grafana "${UPSTREAM_GRAFANA}";
+
+    location / {
+        proxy_pass $upstream_grafana;
+        include /etc/nginx/utils/host;
+
+        # Grafana live (WebSocket)
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+    }
+}

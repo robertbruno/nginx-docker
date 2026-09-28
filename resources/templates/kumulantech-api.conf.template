@@ -1,0 +1,12 @@
+# PostgREST API — api.kumulantech.com
+server {
+    listen 80;
+    server_name ${FQDN_KUMULANTECH_API};
+
+    set $upstream_api "${UPSTREAM_API}";
+
+    location / {
+        proxy_pass $upstream_api;
+        include /etc/nginx/utils/host;
+    }
+}

@@ -1,0 +1,12 @@
+# Prometheus metrics — prometheus.kumulantech.com
+server {
+    listen 80;
+    server_name ${FQDN_KUMULANTECH_PROMETHEUS};
+
+    set $upstream_prometheus "${UPSTREAM_PROMETHEUS}";
+
+    location / {
+        proxy_pass $upstream_prometheus;
+        include /etc/nginx/utils/host;
+    }
+}
