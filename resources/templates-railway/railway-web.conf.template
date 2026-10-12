@@ -1,0 +1,19 @@
+
+server {
+    listen ${PORT};
+    server_name ${FQDN_RAILWAY};
+
+    set $upstream_webapp "${UPSTREAM_WEBAPP}";
+
+    location / {
+        proxy_pass $upstream_webapp;
+        include /etc/nginx/utils/host;
+        include /etc/nginx/utils/gzip;
+    }
+
+    location /health {
+        access_log off;
+        return 200 'ok';
+        add_header Content-Type text/plain;
+    }
+}

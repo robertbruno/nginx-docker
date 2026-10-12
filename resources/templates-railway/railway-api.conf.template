@@ -1,0 +1,19 @@
+
+server {
+    listen ${PORT};
+
+    server_name ${FQDN_RAILWAY_API};
+
+    set $upstream_api "${UPSTREAM_API}";
+
+    location / {
+        proxy_pass $upstream_api;
+        include /etc/nginx/utils/host;
+    }
+
+    location /health {
+        access_log off;
+        return 200 'ok';
+        add_header Content-Type text/plain;
+    }
+}

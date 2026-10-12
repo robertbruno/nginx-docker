@@ -1,0 +1,19 @@
+
+server {
+    listen ${PORT};
+
+    server_name ${FQDN_RAILWAY_ASSISTANT};
+
+    set $upstream_assistant "${UPSTREAM_AI}";
+
+    location / {
+        proxy_pass $upstream_assistant;
+        include /etc/nginx/utils/host;
+    }
+
+    location /health {
+        access_log off;
+        return 200 'ok';
+        add_header Content-Type text/plain;
+    }
+}
