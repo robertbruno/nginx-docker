@@ -1,0 +1,19 @@
+
+# Default server para healthchecks y requests sin Host conocido.
+# El healthcheck de Railway no envia header Host: sin este bloque cae en
+# default.conf (template AWS) y devuelve 404, lo que reinicia el container
+# en loop. Este default_server responde 200 en /health sin importar el Host.
+server {
+    listen ${PORT} default_server;
+    server_name _;
+
+    location /health {
+        access_log off;
+        return 200 'ok';
+        add_header Content-Type text/plain;
+    }
+
+    location / {
+        return 444;
+    }
+}

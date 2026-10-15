@@ -10,6 +10,14 @@ server {
         index  index.html index.htm;
     }
 
+    # Healthcheck: Railway lo pega sin Host valido y cae aca.
+    # Sin este bloque devuelve 404 y Railway reinicia el container en loop.
+    location /health {
+        access_log off;
+        return 200 'ok';
+        add_header Content-Type text/plain;
+    }
+
     # Panel administrativo
     location /ops {
         alias /var/www/admin;

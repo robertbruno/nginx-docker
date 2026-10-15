@@ -41,6 +41,7 @@ COPY resources/templates-railway /etc/nginx/templates-railway
 # Admin panel
 COPY resources/admin /var/www/admin
 
+COPY resources/05-railway-cleanup.sh /docker-entrypoint.d/05-railway-cleanup.sh
 COPY resources/80-webhookd.sh /docker-entrypoint.d/80-webhookd.sh
 COPY resources/90-cron.sh /docker-entrypoint.d/90-cron.sh
 RUN chmod +x /docker-entrypoint.d/*.sh
