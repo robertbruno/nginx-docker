@@ -40,7 +40,7 @@ jobs:
 
       - name: Get version
         id: get_version
-        run: echo "::set-output name=version::$(cat .version)"
+        run: echo "version=$(cat .version)" >> "$GITHUB_OUTPUT"
 
       # Install the cosign tool except on PR
       # https://github.com/sigstore/cosign-installer
@@ -81,10 +81,16 @@ jobs:
         uses: docker/build-push-action@v5.0.0
         with:
           context: .
+          # amd64 y arm64: la imagen corre tanto en AWS/ECS (x86_64) como
+          # en Railway (que en instancias Graviton y Apple Silicon es arm64).
+          platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
+          # La version la toma de .version (paso get_version). Los tags
+          # semversionados (v*.*.* en el push) se suman via meta tags y
+          # dedup automatico de docker/metadata-action.
           tags: |
-            "${{github.repository}}:${{steps.get_version.outputs.version}}"
-            "${{github.repository}}:latest"
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.get_version.outputs.version }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

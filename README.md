@@ -18,6 +18,45 @@ Imagen Docker de Nginx con herramientas integradas para gestion de certificados 
 docker build -t nginx-docker .
 ```
 
+## Railway
+
+La misma imagen corre en Railway detras del edge/TLS de Railway. Railway
+termina SSL en su borde, el contenedor recibe HTTP plano y solo escucha en
+`${PORT}` (Railway inyecta el puerto dinamicamente).
+
+Variables obligatorias en el panel de Railway:
+
+| Variable | Valor | Motivo |
+|----------|-------|--------|
+| `PORT` | *(Railway lo inyecta)* | Puerto que nginx escucha |
+| `NGINX_ENVSUBST_TEMPLATE_DIR` | `/etc/nginx/templates-railway` | Apunta a los templates Railway |
+| `NGINX_RESOLVER` | `[fd12::10]` | Resolver interno IPv6 de Railway |
+| `FQDN_RAILWAY_*` | dominio por servicio | Enrutamiento por Host |
+| `UPSTREAM_*` | URL del upstream | Destino del proxy |
+| `WHD_USER` / `WHD_PASSWD` | credenciales | Auth del panel /ops |
+
+Variables de AWS (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `ALB_ARN`)
+no se configuran en Railway. `update-targets.sh` detecta su ausencia y
+hace skip limpio sin tocar nada.
+
+Los templates Railway estan en `resources/templates-railway/`.
+`00-resolver.conf.template` declara el resolver de Railway ([fd12::10])
+para que los upstreams por variable resuelvan correctamente en la red
+interna IPv6.
+
+```bash
+# Ejemplo de run local simulando Railway
+docker run --rm -p 8080:80 \
+  -e PORT=80 \
+  -e NGINX_ENVSUBST_TEMPLATE_DIR=/etc/nginx/templates-railway \
+  -e NGINX_RESOLVER=[fd12::10] \
+  -e FQDN_RAILWAY=app.railway.app \
+  -e UPSTREAM_WEBAPP=http://webapp.railway.internal:80 \
+  -e WHD_USER=admin \
+  -e WHD_PASSWD=secreto \
+  nginx-docker
+```
+
 ## Run
 
 ```bash
@@ -175,12 +214,18 @@ Archivos de configuracion reutilizables en `resources/utils/`:
 │   ├── admin/
 │   │   └── index.html          # Panel administrativo
 │   ├── crontab                 # Definicion de cron jobs
-│   ├── templates/              # Templates de configuracion nginx
+│   ├── templates/              # Templates AWS (default)
 │   │   ├── default.conf.template
 │   │   ├── api.conf.template
 │   │   ├── api.https.conf.disabled.template
 │   │   ├── webapp.conf.template
 │   │   └── webapp.https.conf.disabled.template
+│   ├── templates-railway/      # Templates Railway (resolver IPv6 + virtual hosts)
+│   │   ├── 00-resolver.conf.template
+│   │   ├── railway-web.conf.template
+│   │   ├── railway-api.conf.template
+│   │   ├── railway-emitter.conf.template
+│   │   └── railway-assistant.conf.template
 │   └── utils/                  # Includes reutilizables
 │       ├── gzip
 │       ├── host

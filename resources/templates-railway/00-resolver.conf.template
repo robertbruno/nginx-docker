@@ -1,0 +1,17 @@
+# Resolver para la red interna de Railway.
+#
+# Es obligatorio: los server blocks de abajo usan upstreams por variable
+# (set $upstream_x "..."; proxy_pass $upstream_x;) y nginx no resuelve
+# nombres por variable sin un resolver declarado en el contexto http.
+#
+# [fd12::10] es el resolver interno de Railway: fijo, igual en todos los
+# proyectos y entornos. La red privada es IPv6, de ahi ipv6=on.
+#
+# valid=10s: las IPs internas cambian cuando un servicio se redespliega.
+# Sin TTL corto nginx cachea la IP vieja y los upstreams quedan en 502
+# hasta reiniciar el contenedor.
+#
+# En AWS este archivo no se usa: el resolver lo declara
+# templates/default.conf.template con ${NGINX_RESOLVER} (127.0.0.1).
+resolver [fd12::10] ipv6=on valid=10s;
+resolver_timeout 5s;

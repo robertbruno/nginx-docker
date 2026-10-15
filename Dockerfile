@@ -2,7 +2,11 @@
 # Compartida entre AWS (ECS, detras de ALB) y Railway (detras de su edge/TLS).
 # El entrypoint oficial de la imagen nginx ya hace envsubst de /etc/nginx/templates/*.template
 # -> /etc/nginx/conf.d/*.conf usando variables de entorno (ninguna accion extra requerida).
-FROM nginx
+#
+# Tag fijo en vez de :latest: el build debe ser reproducible. 1.31.x es la rama
+# mainline (numero menor impar); base Debian trixie, requerida por los apt-get
+# de certbot/awscli/webhookd mas abajo.
+FROM nginx:1.31.7
 
 # https://certbot.eff.org/
 RUN apt-get update\
